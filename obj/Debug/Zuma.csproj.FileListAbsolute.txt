@@ -1,0 +1,11 @@
+C:\Users\youss\Desktop\UNIVERSITY SHIT\YEAR 3\SEMESTER 2\CS381 - Computer Graphics\Code\Project\Zuma\Zuma\bin\Debug\Zuma.exe.config
+C:\Users\youss\Desktop\UNIVERSITY SHIT\YEAR 3\SEMESTER 2\CS381 - Computer Graphics\Code\Project\Zuma\Zuma\bin\Debug\Zuma.exe
+C:\Users\youss\Desktop\UNIVERSITY SHIT\YEAR 3\SEMESTER 2\CS381 - Computer Graphics\Code\Project\Zuma\Zuma\bin\Debug\Zuma.pdb
+C:\Users\youss\Desktop\UNIVERSITY SHIT\YEAR 3\SEMESTER 2\CS381 - Computer Graphics\Code\Project\Zuma\Zuma\obj\Debug\Zuma.csproj.AssemblyReference.cache
+C:\Users\youss\Desktop\UNIVERSITY SHIT\YEAR 3\SEMESTER 2\CS381 - Computer Graphics\Code\Project\Zuma\Zuma\obj\Debug\Zuma.csproj.SuggestedBindingRedirects.cache
+C:\Users\youss\Desktop\UNIVERSITY SHIT\YEAR 3\SEMESTER 2\CS381 - Computer Graphics\Code\Project\Zuma\Zuma\obj\Debug\Zuma.Properties.Resources.resources
+C:\Users\youss\Desktop\UNIVERSITY SHIT\YEAR 3\SEMESTER 2\CS381 - Computer Graphics\Code\Project\Zuma\Zuma\obj\Debug\Zuma.csproj.GenerateResource.cache
+C:\Users\youss\Desktop\UNIVERSITY SHIT\YEAR 3\SEMESTER 2\CS381 - Computer Graphics\Code\Project\Zuma\Zuma\obj\Debug\Zuma.csproj.CoreCompileInputs.cache
+C:\Users\youss\Desktop\UNIVERSITY SHIT\YEAR 3\SEMESTER 2\CS381 - Computer Graphics\Code\Project\Zuma\Zuma\obj\Debug\Zuma.exe
+C:\Users\youss\Desktop\UNIVERSITY SHIT\YEAR 3\SEMESTER 2\CS381 - Computer Graphics\Code\Project\Zuma\Zuma\obj\Debug\Zuma.pdb
+C:\Users\youss\Desktop\UNIVERSITY SHIT\YEAR 3\SEMESTER 2\CS381 - Computer Graphics\Code\Project\Zuma\Zuma\obj\Debug\Zuma.Ball.resources
