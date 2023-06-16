@@ -257,17 +257,12 @@ namespace Zuma
 
         private void Create_Background(float Xf, float Yf)
         {
-            /*Skull pnn = new Skull();
-            pnn.x = Xf;
-            pnn.y = Yf;
-            pnn.Skull_img = new Bitmap("./assets/death.png");
-            LSkulls.Add(pnn);*/
 
             Background pnn = new Background();
             pnn.x = Xf;
             pnn.y = Yf;
 
-            Bitmap OG_BG = new Bitmap("./assets/bg.jpg");
+            Bitmap OG_BG = new Bitmap("./assets/map.png");
 
             int newWidth = 1920;
             int newHeight = 1080;
@@ -302,7 +297,7 @@ namespace Zuma
             Create_Frog(this.ClientSize.Width/2 - 100,this.ClientSize.Height/2 - 100);
             Create_FrogBalls(this.ClientSize.Width / 2 + 15, this.ClientSize.Height / 2 - 70);
 
-            Create_Skull(360, 520);
+            Create_Skull(300, 480);
             Create_Background(0, 0);
 
             BezCurve.SetControlPoint(new Point(80, ClientSize.Height));
@@ -380,7 +375,6 @@ namespace Zuma
             dy.Add(ypos[1] - ypos[0]);
             m.Add(dy[0] / dx[0]);
 
-
         }
 
         private void Timer_Tick(object sender, EventArgs e)
@@ -421,8 +415,8 @@ namespace Zuma
                 }
                /* LBalls[0].x += 20;*/
             }    
-            
             DrawDubb();
+            
         }
 
         private void Form1_MouseDown(object sender, MouseEventArgs e)
@@ -465,6 +459,7 @@ namespace Zuma
             Pen dotPen = new Pen(Color.Black, 5);
             BezCurve.DrawCurve(g);
 
+            g.DrawImage(Lbgs[0].bg_img, Lbgs[0].x, Lbgs[0].y);
 
             float angleInRadians = (LFrogs[0].Direction - 90f) * (float)Math.PI / 180f;
             float lineLength = 200f;
@@ -486,14 +481,13 @@ namespace Zuma
             for (int i = 0; i < LBalls.Count; i++)
             {
                /* g.DrawImage(LBalls[0].ball_img, LBalls[0].x, LBalls[0].y);*/
-
+                
                 g.TranslateTransform(LFrogs[0].x + LFrogs[0].Frog_img.Width / 2, LFrogs[0].y + LFrogs[0].Frog_img.Height / 2);
                 g.RotateTransform(LBalls[i].Direction);
                 g.DrawImage(LBalls[i].ball_img, -LBalls[i].ball_img.Width / 2 + 65, -LBalls[i].ball_img.Height / 2);
                 g.ResetTransform();
             }
 
-  
         }
 
         void DrawDubb()
