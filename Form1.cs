@@ -40,10 +40,8 @@ namespace Zuma
         public float Direction;
         public int type;
 
-
         public float tpos;
         public RectangleF HitBox;
-
 
         public float Xstart;
         public float Ystart;
@@ -190,81 +188,7 @@ namespace Zuma
         }
 
     }
-    public class DDA
-    {
-        public float xs, ys, xe, ye, dx, dy, m, invM, currX, currY, currx2, curry2;
-        int Speed = 10;
-        public float X, Y;
-        public void SetVals(float a, float b, float c, float d)
-        {
-            xs = a;
-            ys = b;
-            xe = c;
-            ye = d;
-
-            //////////////////
-            dx = xe - xs;
-            dy = ye - ys;
-            m = dy / dx;
-            invM = dx / dy;
-            
-            currX = xs; 
-            currY = ys;
-            currx2 = xs;
-            curry2 = ys;
-        }
-
-        public void MoveStep()
-        {
-            if (Math.Abs(dx) > Math.Abs(dy)) //|dy|,|dx|
-            {
-                if (xs < xe)
-                {
-                    currX += Speed;
-                    currY += m * Speed;
-                    if (currX >= xe)
-                    {
-                        SetVals(xe, ye, xs, ys);
-                    }
-                }
-                else
-                {
-                    currX -= Speed;
-                    currY -= m * Speed;
-                    if (currY <= xe)
-                    {
-                        SetVals(xe, ye, xs, ys);
-                    }
-                }
-            }
-            else  //   if (Math.Abs(dx) <   Math.Abs(dy))
-            {
-                if (ys < ye)
-                {
-                    currY += Speed;
-                    currX += invM * Speed;
-                    if (currY >= ye)
-                    {
-                        SetVals(xe, ye, xs, ys);
-                    }
-
-
-
-
-                }
-                else
-                {
-                    currY -= Speed;
-                    currX -= invM * Speed;
-                    if (currY <= ye)
-                    {
-                        SetVals(xe, ye, xs, ys);
-                    }
-                }
-            }
-        }
-
-    }
+    
     public partial class Form1 : Form
     {
         Bitmap Off;
@@ -278,8 +202,6 @@ namespace Zuma
         List<Ball> LBalls = new List<Ball>();
         List<Ball> LBezBalls = new List<Ball>();
 
-        List<DDA> LDDAs = new List<DDA>();
-
         List<float> xpos = new List<float>();
         List<float> ypos = new List<float>();
 
@@ -291,12 +213,11 @@ namespace Zuma
 
         List<PointF> CurvePoints = new List<PointF>();
 
-
         bool Ballshot = false;
 
         List<Rectangle> LHits = new List<Rectangle>();
         Rectangle Hit;
-        int speed = 1;
+        int speed = 15;
         int GiveTime = 0;
 
         int GiveTimeanim = 0;
@@ -317,7 +238,7 @@ namespace Zuma
             this.KeyDown += Form1_KeyDown;
             this.Paint += Form1_Paint;
             this.Timer.Tick += Timer_Tick;
-            this.Timer.Interval = 100;
+            this.Timer.Interval = 1;
             Timer.Start();
 
         }
@@ -484,24 +405,7 @@ namespace Zuma
         }
 
         private void Create_FrogBalls(float Xf, float Yf)
-        {/*
-            Ball Fball = new Ball();
-            frame = Rand.Next(1, 8);
-            Fball.x = Xf;
-            Fball.y = Yf;
-            Fball.ball_img = new Bitmap("./assets/" + frame + ".png");
-            Fball.type = frame;
-            Fball.ishot = false;
-            LBalls.Add(Fball);*/
-
-            /*
-            Ball Fball = new Ball();
-            Fball.x = Xf;
-            Fball.y = Yf;
-            Fball.type = Rand.Next(1, 8);
-            Fball.ball_img = new Bitmap("./assets/" + Fball.type + ".png");
-            Fball.ishot = false;
-            LBalls.Add(Fball);*/
+        {
 
 
             Ball Fball = new Ball();
@@ -542,25 +446,26 @@ namespace Zuma
 
         private void CheckCollision()
         {
+
             for (int i = 0; i < LBalls.Count; i++)
             {
                 Ball ball = LBalls[i];
-                if (ball.ishot)
+                if (!ball.ishot)
+                    continue;
+
+                for (int j = 0; j < LBezBalls.Count; j++)
                 {
-                    for (int j = 0; j < LBezBalls.Count; j++)
+                    Ball bezBall = LBezBalls[j];
+                    if (bezBall.type == ball.type && ball.HitBox.IntersectsWith(bezBall.HitBox))
                     {
-                        Ball bezierBall = LBezBalls[j];
-                        if (bezierBall.type == ball.type && bezierBall.HitBox.IntersectsWith(ball.HitBox))
-                        {
-                            LBalls.RemoveAt(i);
-                            LBezBalls.RemoveAt(j);
-                            MessageBox.Show("hit");
-                            i--;
-                            break;
-                        }
+                        LBalls.RemoveAt(i);
+                        LBezBalls.RemoveAt(j);
+                        i--; 
+                        break;
                     }
                 }
             }
+
         }
 
         private void GameOver()
@@ -580,38 +485,6 @@ namespace Zuma
                
 
         }
-        private void ShootBall(int i)
-        {
-            /*    float startX = LFrogs[0].x + LFrogs[0].Frog_img.Width / 2;
-                float startY = LFrogs[0].y + LFrogs[0].Frog_img.Height / 2;
-
-                dx.Clear();
-                dy.Clear();
-                m.Clear();
-                xpos.Clear();
-                ypos.Clear();
-
-                xpos.Add(startX);
-                xpos.Add(LineXE);
-
-                ypos.Add(startY);
-                ypos.Add(LineYE);
-
-                dx.Add(xpos[1] - xpos[0]);
-                dy.Add(ypos[1] - ypos[0]);
-                m.Add(dy[0] / dx[0]);
-             */
-
-            LBalls[i].x = LFrogs[0].x + LFrogs[0].Frog_img.Width / 2;
-            LBalls[i].y = LFrogs[0].y + LFrogs[0].Frog_img.Height / 2;
-
-      
-            //Shoot Ball logic
-            DDA Shot = new DDA();
-            
-            LDDAs.Add(Shot);
-
-        }
 
         private void Timer_Tick(object sender, EventArgs e)
         {
@@ -624,6 +497,7 @@ namespace Zuma
                     {
                         DX = LBalls[i].Xend - LBalls[i].Xstart;
                         DY = LBalls[i].Yend - LBalls[i].Ystart;
+                        M = DY / DX;
 
                         if (Math.Abs(DX) > Math.Abs(DY))
                         {
@@ -676,20 +550,9 @@ namespace Zuma
                 return;
             }
 
-           /* for (int i = 0; i < LBalls.Count; i++)
-            {
-                Ball ball = LBalls[i];
-                if (ball.ishot)
-                {
-                    ball.x += dx[i];
-                    ball.y += dy[i];
-                    ball.HitBox.Location = new PointF(ball.x, ball.y);
-                }
-            }*/
-
             GiveTime++;
             GiveTimeanim++;
-            this.Text = Ballshot + " Counter " + GiveTime;
+           /* this.Text = Ballshot + " Counter " + GiveTime;*/
 
             DrawDubb();
             
@@ -714,7 +577,7 @@ namespace Zuma
             if (e.KeyCode == Keys.Left)
             {
                 LFrogs[0].Direction -= 5;
-                LBalls[LBalls.Count-1].Direction -= 5;
+                LBalls[LBalls.Count - 1].Direction -= 5;
             }
 
             if (e.KeyCode == Keys.Space)
@@ -722,13 +585,16 @@ namespace Zuma
                 Ballshot = true;
                 LBalls[ballshotct].ishot = true;
 
-                LBalls[ballshotct].Xstart = LBalls[ballshotct].x;
+                float startX = LFrogs[0].x + LFrogs[0].Frog_img.Width / 2;
+                float startY = LFrogs[0].y + LFrogs[0].Frog_img.Height / 2;
+
+                LBalls[ballshotct].Xstart = startX;
                 LBalls[ballshotct].Xend = LineXE;
 
-                LBalls[ballshotct].Ystart = LBalls[ballshotct].y;
-                LBalls[ballshotct].Xend = LineYE;
+                LBalls[ballshotct].Ystart = startY;
+                LBalls[ballshotct].Yend = LineYE;
 
-                /*ShootBall();*/
+               /* ShootBall();*/
 
                 Create_FrogBalls(LFrogs[0].x, LFrogs[0].y);
                 ballshotct++;
@@ -753,6 +619,7 @@ namespace Zuma
 
             float angleInRadians = (LFrogs[0].Direction - 90f) * (float)Math.PI / 180f;
             float lineLength = 200f;
+           
             float XfrogEnd = LFrogs[0].x + LFrogs[0].Frog_img.Width / 2 + lineLength * (float)Math.Cos(angleInRadians);
             float YfrogEnd = LFrogs[0].y + LFrogs[0].Frog_img.Height / 2 + lineLength * (float)Math.Sin(angleInRadians);
 
@@ -785,13 +652,6 @@ namespace Zuma
                     g.ResetTransform();
                 }
             }
-
-            /* if (Ballshot)
-             {
-                 Create_FrogBalls(LFrogs[0].x, LFrogs[0].y);
-                 Ballshot = false;
-             }
-             */
 
             for (int i = 0; i < LBezBalls.Count; i++)
             {
