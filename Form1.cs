@@ -35,9 +35,22 @@ namespace Zuma
     {
         public Bitmap ball_img;
         public float x, y, h, w;
-        public bool Ball_Hit = false;
-        public bool ishot = false;
+        public bool Ball_Hit;
+        public bool ishot;
         public float Direction;
+        public int type;
+
+
+        public float tpos;
+        public RectangleF HitBox;
+
+
+        public float Xstart;
+        public float Ystart;
+
+        public float Xend;
+        public float Yend;
+
     }
 
     public class Rect
@@ -53,18 +66,18 @@ namespace Zuma
         public float TimeIncrement = 0.001f;
         public bool BeFlg = true;
 
-        private float Factorial(int N)
+        private double Factorial(int N)
         {
-            float Result = 1.0f;
+            double Result = 1.0f;
             for (int i = 2; i <= N; i++)
                 Result *= i;
 
             return Result;
         }
 
-        private float BinomialCoefficient(int N, int i)
+        private double BinomialCoefficient(int N, int i)
         {
-            float Result = this.Factorial(N) / (this.Factorial(i) * this.Factorial(N - i));
+            double Result = this.Factorial(N) / (this.Factorial(i) * this.Factorial(N - i));
             return Result;
         }
 
@@ -177,6 +190,81 @@ namespace Zuma
         }
 
     }
+    public class DDA
+    {
+        public float xs, ys, xe, ye, dx, dy, m, invM, currX, currY, currx2, curry2;
+        int Speed = 10;
+        public float X, Y;
+        public void SetVals(float a, float b, float c, float d)
+        {
+            xs = a;
+            ys = b;
+            xe = c;
+            ye = d;
+
+            //////////////////
+            dx = xe - xs;
+            dy = ye - ys;
+            m = dy / dx;
+            invM = dx / dy;
+            
+            currX = xs; 
+            currY = ys;
+            currx2 = xs;
+            curry2 = ys;
+        }
+
+        public void MoveStep()
+        {
+            if (Math.Abs(dx) > Math.Abs(dy)) //|dy|,|dx|
+            {
+                if (xs < xe)
+                {
+                    currX += Speed;
+                    currY += m * Speed;
+                    if (currX >= xe)
+                    {
+                        SetVals(xe, ye, xs, ys);
+                    }
+                }
+                else
+                {
+                    currX -= Speed;
+                    currY -= m * Speed;
+                    if (currY <= xe)
+                    {
+                        SetVals(xe, ye, xs, ys);
+                    }
+                }
+            }
+            else  //   if (Math.Abs(dx) <   Math.Abs(dy))
+            {
+                if (ys < ye)
+                {
+                    currY += Speed;
+                    currX += invM * Speed;
+                    if (currY >= ye)
+                    {
+                        SetVals(xe, ye, xs, ys);
+                    }
+
+
+
+
+                }
+                else
+                {
+                    currY -= Speed;
+                    currX -= invM * Speed;
+                    if (currY <= ye)
+                    {
+                        SetVals(xe, ye, xs, ys);
+                    }
+                }
+            }
+        }
+
+    }
     public partial class Form1 : Form
     {
         Bitmap Off;
@@ -186,7 +274,11 @@ namespace Zuma
         List<Frog> LFrogs = new List<Frog>();
         List<Skull> LSkulls = new List<Skull>();
         List<Background> Lbgs = new List<Background>();
+
         List<Ball> LBalls = new List<Ball>();
+        List<Ball> LBezBalls = new List<Ball>();
+
+        List<DDA> LDDAs = new List<DDA>();
 
         List<float> xpos = new List<float>();
         List<float> ypos = new List<float>();
@@ -195,16 +287,27 @@ namespace Zuma
         List<float> dx = new List<float>();
         List<float> m = new List<float>();
 
+        float DX, DY, M;
+
+        List<PointF> CurvePoints = new List<PointF>();
+
+
         bool Ballshot = false;
 
         List<Rectangle> LHits = new List<Rectangle>();
         Rectangle Hit;
-        int speed = 5;
+        int speed = 1;
         int GiveTime = 0;
-        int frame = 0;
 
+        int GiveTimeanim = 0;
+        int frame = 0;
+        int ballshotct = 0;
+        int MoveBalls = 0;
+
+        float PushBall = 0;
         float LineXE;
         float LineYE;
+
         public Form1()
         {
             InitializeComponent();
@@ -212,18 +315,119 @@ namespace Zuma
             /*this.Load += Form1_Load;*/
             this.MouseDown += Form1_MouseDown;
             this.KeyDown += Form1_KeyDown;
+            this.Paint += Form1_Paint;
             this.Timer.Tick += Timer_Tick;
-            this.Timer.Interval = 1;
+            this.Timer.Interval = 100;
             Timer.Start();
+
         }
 
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            Off = new Bitmap(this.ClientSize.Width, this.ClientSize.Height);
+        
+
+            Create_Frog(this.ClientSize.Width/2 - 100,this.ClientSize.Height/2 - 100);
+            Create_FrogBalls(this.ClientSize.Width / 2 + 15, this.ClientSize.Height / 2 - 70);
+
+            Create_Skull(300, 480);
+            Create_Background(0, 0);
+
+            BezCurve.SetControlPoint(new Point(14, 242));
+            BezCurve.SetControlPoint(new Point(750, -10));
+            BezCurve.SetControlPoint(new Point(1556, -20));
+            BezCurve.SetControlPoint(new Point(1525, 109));
+            BezCurve.SetControlPoint(new Point(1945, 400));
+            BezCurve.SetControlPoint(new Point(2000, 371));
+            BezCurve.SetControlPoint(new Point(2000, 416));
+            BezCurve.SetControlPoint(new Point(1945, 800));
+
+            BezCurve.SetControlPoint(new Point(1945, 800));
+            BezCurve.SetControlPoint(new Point(1945, 800));
+            BezCurve.SetControlPoint(new Point(1945, 1000));
+
+            BezCurve.SetControlPoint(new Point(400, 100));
+/*            BezCurve.SetControlPoint(new Point(1604, 600));
+*/
+            BezCurve.SetControlPoint(new Point(1604, 559));
+            BezCurve.SetControlPoint(new Point(1546, 513));
+            BezCurve.SetControlPoint(new Point(1497, 432));
+            BezCurve.SetControlPoint(new Point(1448, 355));
+            BezCurve.SetControlPoint(new Point(1395, 281));
+            BezCurve.SetControlPoint(new Point(1289, 154));
+            BezCurve.SetControlPoint(new Point(1227, 168));
+            BezCurve.SetControlPoint(new Point(1137, 160));
+            BezCurve.SetControlPoint(new Point(917, 131));
+            BezCurve.SetControlPoint(new Point(820, 220));
+            BezCurve.SetControlPoint(new Point(567, 215));
+            BezCurve.SetControlPoint(new Point(329, 263));
+            BezCurve.SetControlPoint(new Point(143, 333));
+            BezCurve.SetControlPoint(new Point(83, 507));
+
+            BezCurve.SetControlPoint(new Point(-800, 600));
+
+            BezCurve.SetControlPoint(new Point(-800, 800));
+
+           /* BezCurve.SetControlPoint(new Point(-1000, 2000));*/
+
+            BezCurve.SetControlPoint(new Point(-400, 507));
+            BezCurve.SetControlPoint(new Point(36, 744));
+            BezCurve.SetControlPoint(new Point(100, 950));
+            BezCurve.SetControlPoint(new Point(217, 1220));
+            BezCurve.SetControlPoint(new Point(418, 1500));
+
+            BezCurve.SetControlPoint(new Point(611, 1100));
+
+
+            BezCurve.SetControlPoint(new Point(911, 1100));
+            BezCurve.SetControlPoint(new Point(1242, 1100));
+            BezCurve.SetControlPoint(new Point(1393, 813));
+            BezCurve.SetControlPoint(new Point(1595, 884));
+            BezCurve.SetControlPoint(new Point(1900, 1000));
+            BezCurve.SetControlPoint(new Point(2500, 800));
+
+            BezCurve.SetControlPoint(new Point(2000, 1000));
+            BezCurve.SetControlPoint(new Point(1676, 702));
+
+            BezCurve.SetControlPoint(new Point(1676, 702));
+            BezCurve.SetControlPoint(new Point(1680, 621));
+            BezCurve.SetControlPoint(new Point(1568, 646));
+            BezCurve.SetControlPoint(new Point(1505, 577));
+            BezCurve.SetControlPoint(new Point(1392, 572));
+
+            BezCurve.SetControlPoint(new Point(1349, 639));
+            BezCurve.SetControlPoint(new Point(1243, 695));
+            BezCurve.SetControlPoint(new Point(1186, 838));
+            BezCurve.SetControlPoint(new Point(1057, 1000));
+
+            BezCurve.SetControlPoint(new Point(992, 1000));
+            BezCurve.SetControlPoint(new Point(900, 877));
+            BezCurve.SetControlPoint(new Point(815, 725));
+            BezCurve.SetControlPoint(new Point(716, 900));
+            BezCurve.SetControlPoint(new Point(592, 824));
+            BezCurve.SetControlPoint(new Point(542, 694));
+            BezCurve.SetControlPoint(new Point(471, 779));
+            BezCurve.SetControlPoint(new Point(428, 705));
+            BezCurve.SetControlPoint(new Point(345, 681));
+            BezCurve.SetControlPoint(new Point(367, 607));
+
+
+            /*Create_Ball_Bezier();*/
+
+            for (float t = 0; t <= 1; t += 0.0001f)
+            {
+                CurvePoints.Add(BezCurve.CalculateCurvePointAtTimeT(t));
+                /*Console.WriteLine(CurvePoints[mina].X);
+                mina++;*/
+               
+            }
+            /* for(int i = 0; i < 10; i++)
+             {
+                 Create_Ball_Bezier();
+             }*/
+        }
         private void Create_Skull(float Xf, float Yf)
         {
-            /*Skull pnn = new Skull();
-            pnn.x = Xf;
-            pnn.y = Yf;
-            pnn.Skull_img = new Bitmap("./assets/death.png");
-            LSkulls.Add(pnn);*/
 
             Skull pnn = new Skull();
             pnn.x = Xf;
@@ -280,173 +484,260 @@ namespace Zuma
         }
 
         private void Create_FrogBalls(float Xf, float Yf)
-        {
+        {/*
             Ball Fball = new Ball();
             frame = Rand.Next(1, 8);
             Fball.x = Xf;
             Fball.y = Yf;
-            Fball.ball_img = new Bitmap("./assets/"+ frame + ".png");
+            Fball.ball_img = new Bitmap("./assets/" + frame + ".png");
+            Fball.type = frame;
+            Fball.ishot = false;
+            LBalls.Add(Fball);*/
+
+            /*
+            Ball Fball = new Ball();
+            Fball.x = Xf;
+            Fball.y = Yf;
+            Fball.type = Rand.Next(1, 8);
+            Fball.ball_img = new Bitmap("./assets/" + Fball.type + ".png");
+            Fball.ishot = false;
+            LBalls.Add(Fball);*/
+
+
+            Ball Fball = new Ball();
+            Fball.x = Xf;
+            Fball.y = Yf;
+            Fball.type = Rand.Next(1, 8);
+            Fball.ball_img = new Bitmap("./assets/" + Fball.type + ".png");
+            Fball.ishot = false;
+            Fball.Direction = LFrogs[0].Direction;
             LBalls.Add(Fball);
 
         }
-        
-        private void Form1_Load(object sender, EventArgs e)
+
+        private void Create_Ball_Bezier()
         {
-            Off = new Bitmap(this.ClientSize.Width, this.ClientSize.Height);
+            /*if (LBalls.Count >= 100)
+                 return;*/
 
-            Create_Frog(this.ClientSize.Width/2 - 100,this.ClientSize.Height/2 - 100);
-            Create_FrogBalls(this.ClientSize.Width / 2 + 15, this.ClientSize.Height / 2 - 70);
+            float startX = BezCurve.GetControlPoint(0).X;
+            float startY = BezCurve.GetControlPoint(0).Y;
+            frame = Rand.Next(1, 8);
 
-            Create_Skull(300, 480);
-            Create_Background(0, 0);
+            Ball BezoBall = new Ball();
+            BezoBall.x = startX;
+            BezoBall.y = startY;
+            BezoBall.ball_img = new Bitmap("./assets/" + frame + ".png");
+            BezoBall.type = frame;
+            BezoBall.ishot = false;
+            BezoBall.tpos = 0;
 
-            BezCurve.SetControlPoint(new Point(80, ClientSize.Height));
-            BezCurve.SetControlPoint(new Point(80, 565));
-            BezCurve.SetControlPoint(new Point(80, 165));
-            BezCurve.SetControlPoint(new Point(520, 60));
-            BezCurve.SetControlPoint(new Point(1020, 10));
-            /* BezCurve.SetControlPoint(new Point(1120, 30));
-             BezCurve.SetControlPoint(new Point(1220, 30));*/
-            BezCurve.SetControlPoint(new Point(1320, 30));
-            BezCurve.SetControlPoint(new Point(1420, 30));
+            BezoBall.HitBox = new RectangleF(BezoBall.x, BezoBall.y, BezoBall.ball_img.Width, BezoBall.ball_img.Height);
 
-            BezCurve.SetControlPoint(new Point(1620, 20));
-            BezCurve.SetControlPoint(new Point(1820, 20));
+            LBezBalls.Add(BezoBall);
 
-            BezCurve.SetControlPoint(new Point(1600, 200));
-            BezCurve.SetControlPoint(new Point(1600, 600));
+            /*PushBall += 1;*/
 
-            BezCurve.SetControlPoint(new Point(1920, 200));
-            BezCurve.SetControlPoint(new Point(1880, 600));
-            BezCurve.SetControlPoint(new Point(1980, 1000));
-            BezCurve.SetControlPoint(new Point(2180, 1100));
-            BezCurve.SetControlPoint(new Point(2300, 1800));
-
-            BezCurve.SetControlPoint(new Point(900, 1000));
-            BezCurve.SetControlPoint(new Point(-500, 900));
-            BezCurve.SetControlPoint(new Point(-500, 900));
-
-            BezCurve.SetControlPoint(new Point(1000, 900));
-            BezCurve.SetControlPoint(new Point(3900, 820));
-
-            BezCurve.SetControlPoint(new Point(1300, 820));
-            BezCurve.SetControlPoint(new Point(1680, 820));
-
-            BezCurve.SetControlPoint(new Point(1380, 780));
-            BezCurve.SetControlPoint(new Point(1300, 680));
-            BezCurve.SetControlPoint(new Point(960, 580));
-            BezCurve.SetControlPoint(new Point(960, 580));
-
-            BezCurve.SetControlPoint(new Point(1360, 480));
-            BezCurve.SetControlPoint(new Point(1460, 380));
-
-            BezCurve.SetControlPoint(new Point(1460, 280));
-            BezCurve.SetControlPoint(new Point(1760, 280));
-
-            BezCurve.SetControlPoint(new Point(1260, 50));
-            BezCurve.SetControlPoint(new Point(1000, 170));
-
-
-
-            BezCurve.SetControlPoint(new Point(700, 250));
-
-            BezCurve.SetControlPoint(new Point(450, 590));
-
-
-
-            /*BezCurve.SetControlPoint(new Point(300, 450));*/
-            /* Hit = new Rectangle(500, 200, 2, 500);*/
         }
-        private void Animate_BallShoot()
+
+        private void CheckCollision()
         {
-            dx.Clear();
-            dy.Clear();
-            m.Clear();
-            xpos.Clear();
-            ypos.Clear();
+            for (int i = 0; i < LBalls.Count; i++)
+            {
+                Ball ball = LBalls[i];
+                if (ball.ishot)
+                {
+                    for (int j = 0; j < LBezBalls.Count; j++)
+                    {
+                        Ball bezierBall = LBezBalls[j];
+                        if (bezierBall.type == ball.type && bezierBall.HitBox.IntersectsWith(ball.HitBox))
+                        {
+                            LBalls.RemoveAt(i);
+                            LBezBalls.RemoveAt(j);
+                            MessageBox.Show("hit");
+                            i--;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
 
-            xpos.Add(LBalls[0].x);
-            xpos.Add(LineXE);
+        private void GameOver()
+        {
+            Timer.Stop();
+            MessageBox.Show("Game Over");
+        }
+        private void Animate_Ball_Bezier()
+        {
+            for (int i = 0; i < LBezBalls.Count; i++)
+            {
+                PointF BPos = BezCurve.CalculateCurvePointAtTimeT(LBezBalls[i].tpos);
+                LBezBalls[i].tpos += 0.008f;
+                LBezBalls[i].x = BPos.X;
+                LBezBalls[i].y = BPos.Y;
+            }
+               
 
-            ypos.Add(LBalls[0].y);
-            ypos.Add(LineYE);
+        }
+        private void ShootBall(int i)
+        {
+            /*    float startX = LFrogs[0].x + LFrogs[0].Frog_img.Width / 2;
+                float startY = LFrogs[0].y + LFrogs[0].Frog_img.Height / 2;
 
-            dx.Add(xpos[1] - xpos[0]);
-            dy.Add(ypos[1] - ypos[0]);
-            m.Add(dy[0] / dx[0]);
+                dx.Clear();
+                dy.Clear();
+                m.Clear();
+                xpos.Clear();
+                ypos.Clear();
+
+                xpos.Add(startX);
+                xpos.Add(LineXE);
+
+                ypos.Add(startY);
+                ypos.Add(LineYE);
+
+                dx.Add(xpos[1] - xpos[0]);
+                dy.Add(ypos[1] - ypos[0]);
+                m.Add(dy[0] / dx[0]);
+             */
+
+            LBalls[i].x = LFrogs[0].x + LFrogs[0].Frog_img.Width / 2;
+            LBalls[i].y = LFrogs[0].y + LFrogs[0].Frog_img.Height / 2;
+
+      
+            //Shoot Ball logic
+            DDA Shot = new DDA();
+            
+            LDDAs.Add(Shot);
 
         }
 
         private void Timer_Tick(object sender, EventArgs e)
         {
-            if(Ballshot)
+           /* if (Ballshot)*/
             {
-                this.Text = Ballshot + " Xst " + xpos[0] + " Yst " + ypos[0] + " Xend " + xpos[1] + " Yend " + ypos[1];
-                if (Math.Abs(dx[0]) > Math.Abs(dy[0]))
+                for (int i = 0; i < LBalls.Count; i++)
                 {
-                    if (xpos[0] < xpos[1])
-                    {
-                        LBalls[0].x += speed;
-                        LBalls[0].y += m[0] * speed;
 
-                    }
-                    else
+                    if (LBalls[i].ishot)
                     {
-                        LBalls[0].x -= speed;
-                        LBalls[0].y -= m[0] * speed;
+                        DX = LBalls[i].Xend - LBalls[i].Xstart;
+                        DY = LBalls[i].Yend - LBalls[i].Ystart;
 
+                        if (Math.Abs(DX) > Math.Abs(DY))
+                        {
+                            if (LBalls[i].Xstart < LBalls[i].Xend)
+                            {
+                                LBalls[i].x += speed;
+                                LBalls[i].y += M * speed;
+
+                            }
+                            else
+                            {
+                                LBalls[i].x -= speed;
+                                LBalls[i].y -= M * speed;
+                            }
+                        }
+                        else
+                        {
+                            if (LBalls[i].Ystart < LBalls[i].Yend)
+                            {
+                                LBalls[i].y += speed;
+                                LBalls[i].x += 1 / M * speed;
+                            }
+                            else
+                            {
+                                LBalls[i].y -= speed;
+                                LBalls[i].x -= 1 / M * speed;
+                            }
+                        }
                     }
                 }
-                else
+            }
+
+            if (GiveTime > 2)
+            {
+                Create_Ball_Bezier();
+                Animate_Ball_Bezier();
+
+                GiveTime = 0;
+            }
+            /*if(GiveTimeanim  < 1)
+            {
+                Animate_Ball_Bezier();
+                GiveTime = 0;
+            }*/
+            CheckCollision();
+
+            if (LBezBalls.Count > 0 && LBezBalls[0].tpos >= 1.0f)
+            {
+                GameOver();
+                return;
+            }
+
+           /* for (int i = 0; i < LBalls.Count; i++)
+            {
+                Ball ball = LBalls[i];
+                if (ball.ishot)
                 {
-                    if (ypos[0] < ypos[1])
-                    {
-                        LBalls[0].y += speed;
-                        LBalls[0].x += 1 / m[0] * speed;
-
-                    }
-                    else
-                    {
-                        LBalls[0].y -= speed;
-                        LBalls[0].x -= 1 / m[0] * speed;
-
-                    }
-
+                    ball.x += dx[i];
+                    ball.y += dy[i];
+                    ball.HitBox.Location = new PointF(ball.x, ball.y);
                 }
-               /* LBalls[0].x += 20;*/
-            }    
+            }*/
+
+            GiveTime++;
+            GiveTimeanim++;
+            this.Text = Ballshot + " Counter " + GiveTime;
+
             DrawDubb();
             
         }
 
         private void Form1_MouseDown(object sender, MouseEventArgs e)
         {
-            Text = e.Location.X + " : " + e.Location.Y;
+            Text = e.Location.X + " : " + e.Location.Y + " ; " + Ballshot;
             
            
             DrawDubb();
         }
 
-        private void Form1_KeyDown(object sender, KeyEventArgs e)
+        private void Form1_KeyDown(object sender, KeyEventArgs e)    
         {
             if (e.KeyCode == Keys.Right)
             {
                 LFrogs[0].Direction += 5;
-                LBalls[0].Direction += 5;
+                LBalls[LBalls.Count - 1].Direction += 5;
 
             }
             if (e.KeyCode == Keys.Left)
             {
                 LFrogs[0].Direction -= 5;
-                LBalls[0].Direction -= 5;
+                LBalls[LBalls.Count-1].Direction -= 5;
             }
 
             if (e.KeyCode == Keys.Space)
             {
                 Ballshot = true;
-                Animate_BallShoot();
+                LBalls[ballshotct].ishot = true;
+
+                LBalls[ballshotct].Xstart = LBalls[ballshotct].x;
+                LBalls[ballshotct].Xend = LineXE;
+
+                LBalls[ballshotct].Ystart = LBalls[ballshotct].y;
+                LBalls[ballshotct].Xend = LineYE;
+
+                /*ShootBall();*/
+
+                Create_FrogBalls(LFrogs[0].x, LFrogs[0].y);
+                ballshotct++;
+
             }
+
+
         }
+      
 
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
@@ -457,7 +748,6 @@ namespace Zuma
         {
             g.Clear(Color.DarkMagenta);
             Pen dotPen = new Pen(Color.Black, 5);
-            BezCurve.DrawCurve(g);
 
             g.DrawImage(Lbgs[0].bg_img, Lbgs[0].x, Lbgs[0].y);
 
@@ -480,16 +770,37 @@ namespace Zuma
 
             for (int i = 0; i < LBalls.Count; i++)
             {
-               /* g.DrawImage(LBalls[0].ball_img, LBalls[0].x, LBalls[0].y);*/
-                
-                g.TranslateTransform(LFrogs[0].x + LFrogs[0].Frog_img.Width / 2, LFrogs[0].y + LFrogs[0].Frog_img.Height / 2);
-                g.RotateTransform(LBalls[i].Direction);
-                g.DrawImage(LBalls[i].ball_img, -LBalls[i].ball_img.Width / 2 + 65, -LBalls[i].ball_img.Height / 2);
-                g.ResetTransform();
+
+
+                if (LBalls[i].ishot)
+                {
+                    g.DrawImage(LBalls[i].ball_img, LBalls[i].x, LBalls[i].y);
+                    /*Create_FrogBalls(-LBalls[i].ball_img.Width / 2 + 65, -LBalls[i].ball_img.Height / 2);*/
+                }
+                else
+                {
+                    g.TranslateTransform(LFrogs[0].x + LFrogs[0].Frog_img.Width / 2, LFrogs[0].y + LFrogs[0].Frog_img.Height / 2);
+                    g.RotateTransform(LBalls[LBalls.Count-1].Direction);
+                    g.DrawImage(LBalls[i].ball_img, -LBalls[i].ball_img.Width / 2 + 65, -LBalls[i].ball_img.Height / 2);
+                    g.ResetTransform();
+                }
             }
 
-        }
+            /* if (Ballshot)
+             {
+                 Create_FrogBalls(LFrogs[0].x, LFrogs[0].y);
+                 Ballshot = false;
+             }
+             */
 
+            for (int i = 0; i < LBezBalls.Count; i++)
+            {
+                g.DrawImage(LBezBalls[i].ball_img, LBezBalls[i].x, LBezBalls[i].y);
+                /*g.DrawRectangle(LBezBalls[i].HitBox, LBezBalls[i].x, LBezBalls[i].y);*/
+            }
+
+           /* BezCurve.DrawCurve(g);*/
+        }
         void DrawDubb()
         {
             Graphics G = this.CreateGraphics();
